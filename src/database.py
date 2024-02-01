@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import urllib.parse as up
@@ -15,5 +15,7 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except:
+        return {"message":"something went wrong!"}
     finally:
         db.close()

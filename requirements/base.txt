@@ -1,5 +1,5 @@
-databases-0.8.0 
-fastapi-0.109.0 
-mysql-connector-python-8.3.0 
-sqlalchemy-1.4.51 
-uvicorn-0.27.0
+databases 
+fastapi
+mysql-connector-python 
+sqlalchemy
+uvicorn

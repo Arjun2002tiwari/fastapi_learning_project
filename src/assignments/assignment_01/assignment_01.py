@@ -50,9 +50,3 @@ def update_brandSetting(user_id:int,brand_id:int,rec:dict,session:Session=Depend
 def delete_rec(user_id:int,rec:dict,session:Session=Depends(get_db)):
     delete_result=delete_record(user_id,rec,session)
     return delete_result
-
-
-
-
-        
-
