@@ -1,5 +1,6 @@
 import json
 from pydantic import BaseModel
+from fastapi import status
 
 
 class User_Info(BaseModel):
@@ -7,7 +8,7 @@ class User_Info(BaseModel):
     last_name:str
     email:str
     primary_coach_email:str
-    secondary_coach_email:int
+    secondary_coach_email:int 
     account_id:int
 
 
@@ -39,10 +40,10 @@ def process_user_data(user_create: User_Info):
 
 
 
-def custom_response(data):
+def custom_response(data={}):
     return {
         "success":True,
-        "status_code":200,
+        "status_code":status.HTTP_200_OK,
         "data":data
     }
 
@@ -60,8 +61,7 @@ def get_modified_data(data,bsModel):
         "brand_id":data.brand_id,
         "settings_json":data.settings_json,
         "inactive_settings": 0,
-        "created_time": "2024-02-01T16:49:51",
-        "created_by": 20105,
+        "created_by": data.created_by
     }
     return new_data
 

@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey, LargeBinary, text
 from src.database import Base
 from sqlalchemy.dialects.mysql import INTEGER, TINYINT, TIMESTAMP
-from sqlalchemy.orm import relationship
-from datetime import datetime
 from sqlalchemy.sql import func
 
 
@@ -15,6 +13,8 @@ class BrandSettings(Base):
     inactive_settings = Column(Boolean, default=False)
     created_by = Column(Integer, nullable=False)
     created_time = Column(TIMESTAMP, nullable=False, server_default='CURRENT_TIMESTAMP') #onupdate='CURRENT_TIMESTAMP')
+
+
 
 
 
@@ -56,6 +56,8 @@ class Story(Base):
 
 
 
+
+
 class User(Base):
     __tablename__ = 'user'
 
@@ -74,7 +76,7 @@ class User(Base):
     created_time = Column(DateTime)
     inactive = Column(TINYINT(1), server_default=text("'0'"))
     inactive_datetime = Column(DateTime)
-    # language_id = Column(ForeignKey('language.id', ondelete='CASCADE', onupdate='CASCADE'), index=True)
+    language_id = Column(ForeignKey('language.id', ondelete='CASCADE', onupdate='CASCADE'), index=True)
     signature = Column(Text)
     coach_id = Column(ForeignKey('user.id'), index=True)
     secondary_coach_id = Column(ForeignKey('user.id'), index=True)
@@ -93,6 +95,7 @@ class User(Base):
     
 
 
+
 class Brand(Base):
     __tablename__ = 'brand'
 
@@ -103,6 +106,9 @@ class Brand(Base):
     created_time = Column(TIMESTAMP, server_default=func.current_timestamp(), nullable=False)
     updated_by = Column(Integer, default=0)
     last_updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), nullable=True)
+
+
+
 
 
 class Account(Base):
@@ -124,7 +130,34 @@ class Account(Base):
     disable_hide_chat_preference = Column(String(255), nullable=True)
 
 
-    
+
+
+
+class BrandTelephonySetting(Base):
+    __tablename__ = 'brand_telephony_settings'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    brand_id = Column(Integer, ForeignKey('brand.id'), nullable=False)
+    ivr_number = Column(String(255), nullable=False, comment='Twilio number exposed to end user')
+    type = Column(Integer, nullable=False, default=1, comment='1 = creating recording, 2 = Listening to recording')
+    inactive = Column(Boolean, default=False)
+    created_time = Column(DateTime)
+
+
+
+
+
+class Language(Base):
+    __tablename__ = 'language'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(45))
+    code = Column(String(45))
+    inactive = Column(Boolean, default=False)
+
+
+
+   
 
 
 

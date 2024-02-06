@@ -19,19 +19,28 @@ a02_router=APIRouter()
 #    return {"1": "hi"}
 
 
-
+#add user in the User table.
 @a02_router.post('/add_user')
 def add_user(user: dict = Depends(process_user_data),db:Session=Depends(get_db)):
     try:
-        new_user=User(**user)
+        # new_user=User(**user)
+        new_user=User(user.username,)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
         
-        query_results=db.query(User.id.label("user_id"),Account.id.label("account_id"), Brand.id.label("brand_id"), Brand.name.label("brand_name")).filter(User.id==new_user.id,Account.id==new_user.account_id)\
-        .join(Brand,Brand.id==Account.brandName).first()
+        query_results=db.query(
+            User.id.label("user_id"),
+            Account.id.label("account_id"), 
+            Brand.id.label("brand_id"), 
+            Brand.name.label("brand_name"))\
+            .filter(User.id==new_user.id,Account.id==new_user.account_id)\
+            .join(Brand,Brand.id==Account.brandName).first()
 
-        return custom_response(query_results)
+        if query_results:
+            return custom_response(query_results)
+        
+        return JSONResponse(status_code=404,content={"message":"data not found!"})
     except:
         return JSONResponse(status_code=400,content={"something went wrong!"})
 
@@ -39,6 +48,7 @@ def add_user(user: dict = Depends(process_user_data),db:Session=Depends(get_db))
 
 
 
+#update setting_json,inactive_Settings in brand_settings table.
 @a02_router.post('/brand_setting')
 def update_brand_setting(bsModel:dict=Depends(process_bsModel),loggedIn_id:int=Cookie(),db:Session=Depends(get_db)):
     try:
@@ -52,44 +62,59 @@ def update_brand_setting(bsModel:dict=Depends(process_bsModel),loggedIn_id:int=C
         )
         
         db.query(BrandSettings).filter(BrandSettings.id==query_results.BrandSettings.id).update({"inactive_settings": 1})
+
         new_brandSetting_data=get_modified_data(query_results.BrandSettings,bsModel)
         new_data=BrandSettings(**new_brandSetting_data)
         db.add(new_data)
         db.commit()
         db.refresh(new_data)
+        print(new_data.settings_json)
+        import json
+
+        setting_json = json.loads(new_data.settings_json)
+        print(setting_json)
 
 
-        response_data={"user_id":loggedIn_id,"brand_id":new_data.brand_id,"brand_setting":new_data}
+        response_data={"user_id":loggedIn_id,"brand_id":new_data.brand_id,"brand_setting": setting_json}
         return {"success":True,"status_code":200,"data":response_data}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(status_code=400,content={"message":"something went wrong!"})
 
 
 
 
 
-
+#get all stories where inactive is 0 from Story table.
 @a02_router.post('/get_story')
 def get_story(user_id: int = Cookie(),db:Session=Depends(get_db)):
         try:
-            query_results=db.query(User.id.label("user_id"),Account.id.label("account_id"), Brand.id.label("brand_id"),Story.id,Story.title)\
+            query_results=db.query(
+                User.id.label("user_id"),
+                Account.id.label("account_id"), 
+                Brand.id.label("brand_id"),
+                Story.id,
+                Story.title
+            )\
             .filter(User.id==user_id,Story.inactive == 0)\
             .join(Brand, Story.brand_id == Brand.id)\
             .join(Account, Brand.id == Account.brandName)\
             .join(User, Account.id == User.account_id).all()
 
+            if query_results:
 
-            result_dict = {"user_id": None, "account_id": None, "brand_id": None, "stories": []}
+                stories = []
+                result_dict = {"user_id": user_id, "account_id": query_results[0].account_id, "brand_id": query_results[0].brand_id, "stories": stories}
 
-            for row in query_results:
-                if result_dict["user_id"] is None:
-                    result_dict["user_id"] = row.user_id
-                    result_dict["account_id"] = row.account_id
-                    result_dict["brand_id"] = row.brand_id
+                for row in query_results:
+                   
+                    s_dta = {"story_id": row.id, "story_title": row.title}
+                    stories.append(s_dta)
 
-                result_dict["stories"].append({"story_id": row.id, "story_title": row.title})
-
-            return custom_response(result_dict)
+                return custom_response(data=result_dict)
+            
+            return JSONResponse(status_code=404,content={"message":"data not found!"})
+        
         except:
              return JSONResponse(status_code=400,content={"message":"something went wrong!"})
         
@@ -97,14 +122,17 @@ def get_story(user_id: int = Cookie(),db:Session=Depends(get_db)):
 
 
 
+#change inactive status in the User table.
 @a02_router.put('/update_status')
 def update_status(user_ids:str=Cookie(),statuses:str=Cookie(),db:Session=Depends(get_db)):
     try:
         user_ids_list = [int(user_id) for user_id in user_ids.split(" ")]
         status_list=[int(status) for status in statuses.split(" ")]
+
+
         
         for user_id,inactive in zip(user_ids_list,status_list):
-            db.query(User).filter(User.id == user_id).update({"inactive":inactive})
+            db.query(User).filter(User.id == user_id ,User.inactive!=2).update({"inactive":inactive})
         db.commit()
 
         response_data = [
